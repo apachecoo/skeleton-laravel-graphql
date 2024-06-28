@@ -1,8 +1,13 @@
 FROM php:8.3-fpm
 
+# Copiar archivos de configuración
 COPY php.ini /usr/local/etc/php/
 COPY docker.conf /usr/local/etc/php-fpm.d/docker.conf
 COPY .bashrc /root/
+
+# Crear un grupo y usuario llamado workspace
+RUN groupadd -g 1000 workspace && \
+    useradd -u 1000 -g workspace -m -s /bin/bash workspace
 
 # mix
 RUN apt-get update \
@@ -48,8 +53,15 @@ ENV PATH $PATH:/composer/vendor/bin
 RUN composer config --global process-timeout 3600
 RUN composer global require "laravel/installer"
 
+# Cambiar el propietario del directorio de trabajo al usuario workspace
+RUN chown -R workspace:workspace /var/www
+
 WORKDIR /root
 RUN git clone https://github.com/seebi/dircolors-solarized
 
 EXPOSE 5173
+
+# Cambiar al usuario workspace
+USER workspace
+
 WORKDIR /var/www
